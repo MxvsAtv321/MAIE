@@ -15,6 +15,8 @@ from maie.models import StructuredModel
 import mlflow
 import mlflow.pyfunc
 import mlflow.lightgbm
+import shap
+from functools import lru_cache
 
 
 app = FastAPI(title="MAIE API", version="0.1.0")
@@ -30,6 +32,15 @@ class ScoreResponse(BaseModel):
 
 class ExplainResponse(BaseModel):
     feature_importance: Dict[str, float]
+
+class ExplainLocalRequest(BaseModel):
+    prices: Dict[str, List[float]]
+    ticker: str
+    top_k: int = 10
+
+class ExplainLocalResponse(BaseModel):
+    ticker: str
+    top_features: List[tuple[str, float]]  # (feature, shap_value)
 
 
 # Load persisted model on startup (MLflow)
@@ -110,5 +121,48 @@ def explain() -> ExplainResponse:
     except Exception:
         pass
     return ExplainResponse(feature_importance=out)
+
+@lru_cache(maxsize=1)
+def _explainer_cached():
+    """Cache a TreeExplainer for speed."""
+    booster = None
+    if LGBM_MODEL is not None and hasattr(LGBM_MODEL, "booster_"):
+        booster = LGBM_MODEL.booster_
+    elif ML_MODEL and hasattr(ML_MODEL, "_model_impl") and hasattr(ML_MODEL._model_impl, "get_booster"):
+        booster = ML_MODEL._model_impl.get_booster()
+    if booster is None:
+        return None
+    return shap.TreeExplainer(booster)
+
+@app.post("/explain_local", response_model=ExplainLocalResponse)
+def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
+    """Return top-K SHAP feature contributions for a given ticker on the latest row."""
+    # Build DataFrame from input prices
+    lens = {k: len(v) for k, v in req.prices.items()}
+    n = max(lens.values())
+    idx = pd.RangeIndex(n)
+    
+    data = {k: pd.Series(v, index=pd.RangeIndex(len(v))) for k, v in req.prices.items()}
+    df = pd.DataFrame(data).reindex(index=idx).ffill().bfill()
+    
+    X, y = build_features(df)
+    latest = X.iloc[-1]  # Get latest row
+    
+    if req.ticker not in latest.index:
+        return ExplainLocalResponse(ticker=req.ticker, top_features=[])
+    
+    xrow = latest.loc[[req.ticker]].values.reshape(1, -1)
+    explainer = _explainer_cached()
+    if explainer is None:
+        return ExplainLocalResponse(ticker=req.ticker, top_features=[])
+    
+    sv = explainer.shap_values(xrow)
+    # LightGBM single output → sv is (n, d) or list; handle both
+    if isinstance(sv, list):
+        sv = sv[0]
+    vals = sv[0]
+    feats = latest.columns.tolist()
+    pairs = sorted(zip(feats, map(float, vals)), key=lambda z: abs(z[1]), reverse=True)[:req.top_k]
+    return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
 
 
