@@ -7,6 +7,8 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import cvxpy as cp
+import scipy.sparse as sp
+import osqp
 
 
 @dataclass
@@ -45,24 +47,59 @@ class MeanVarianceOptimizer:
         mu = alphas.values.astype(float)
         Sigma = cov.loc[assets, assets].values.astype(float)
 
-        w = cp.Variable(n)
+        # Use OSQP formulation for future L1 turnover extensions
+        P = 2.0 * Sigma  # OSQP objective uses 0.5 x^T P x
+        q = -mu
 
-        # Objective: maximize mu^T w - lambda * w^T Sigma w
-        risk = cp.quad_form(w, Sigma)
-        objective = cp.Maximize(mu @ w - self.risk_aversion * risk)
-
-        constraints = []
+        # Base constraints
+        G = self.gross_limit
+        cap = self.weight_cap
         if self.long_only:
-            constraints += [cp.sum(w) == 1.0, w >= 0.0, w <= self.weight_cap]
+            # sum w = 1, 0 <= w <= cap
+            A = sp.vstack([
+                sp.csr_matrix(np.ones((1, n))),
+                sp.eye(n),
+                -sp.eye(n),
+            ])
+            u = np.concatenate([
+                np.array([1.0]),
+                np.full(n, cap),
+                np.zeros(n),
+            ])
+            l = np.concatenate([
+                np.array([1.0]),
+                np.zeros(n),
+                -np.full(n, np.inf),
+            ])
         else:
-            constraints += [cp.sum(w) == 0.0, cp.norm1(w) <= self.gross_limit, cp.abs(w) <= self.weight_cap]
+            # sum w = 0, |w|_1 <= G, |w| <= cap
+            # Implement |w|_1 <= G via box and post-scale; primary constraints: sum=0, |w|<=cap
+            A = sp.vstack([
+                sp.csr_matrix(np.ones((1, n))),
+                sp.eye(n),
+                -sp.eye(n),
+            ])
+            u = np.concatenate([
+                np.array([0.0]),
+                np.full(n, cap),
+                np.full(n, cap),
+            ])
+            l = np.concatenate([
+                np.array([0.0]),
+                -np.full(n, np.inf),
+                -np.full(n, np.inf),
+            ])
 
-        prob = cp.Problem(objective, constraints)
-        prob.solve(solver=cp.OSQP, verbose=False)
-
-        if w.value is None:
+        prob = osqp.OSQP()
+        prob.setup(P=sp.csc_matrix(P), q=q, A=A.tocsc(), l=l, u=u, verbose=False)
+        res = prob.solve()
+        if res.x is None:
             raise RuntimeError("Optimization failed")
-        weights = pd.Series(w.value, index=assets)
-        return OptimizeResult(weights=weights, objective_value=float(prob.value))
+        w = pd.Series(res.x, index=assets).clip(lower=-cap, upper=cap)
+        # Normalize gross exposure if needed
+        gross = w.abs().sum()
+        if not self.long_only and gross > G:
+            w *= G / (gross + 1e-12)
+        return OptimizeResult(weights=w, objective_value=float(res.info.obj_val))
 
 
