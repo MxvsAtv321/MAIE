@@ -1,0 +1,12 @@
+gross_limit: 2.0
+net_target: 0.0
+position_cap_bps: 100
+sector_neutral: true
+beta_neutral: true
+adv_limit: 10
+leverage_target: 2.0
+enforce_beta_neutral: true
+enforce_sector_neutral: true
+turnover_gamma: 0.002
+beta_target: 0.0
+
