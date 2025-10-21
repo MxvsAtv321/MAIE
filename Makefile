@@ -1,4 +1,4 @@
-.PHONY: venv install lint test api demo
+.PHONY: venv install lint test api demo build-expected bt-constrained report
 
 venv:
 	uv venv .venv
@@ -20,5 +20,17 @@ api:
 
 demo:
 	python scripts/run_demo.py
+
+# Build monthly expected returns parquet files + latest snapshot
+build-expected:
+	python scripts/build_expected_panel.py
+
+# Run constrained backtest using parquet expected panel
+bt-constrained: build-expected
+	python scripts/run_bt_from_expected.py
+
+# Aggregate monthly outputs into a single CSV report (returns + diagnostics)
+report:
+	python scripts/make_report.py
 
 

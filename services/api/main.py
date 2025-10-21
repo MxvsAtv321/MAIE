@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from maie.features import build_features
 from maie.models import StructuredModel
+from maie.models.expected_io import load_expected_latest
 import mlflow
 import mlflow.pyfunc
 import mlflow.lightgbm
@@ -41,6 +42,9 @@ class ExplainLocalRequest(BaseModel):
 class ExplainLocalResponse(BaseModel):
     ticker: str
     top_features: List[tuple[str, float]]  # (feature, shap_value)
+
+class ScoreExpectedRequest(BaseModel):
+    tickers: List[str] | None = None  # if None, return all available
 
 
 # Load persisted model on startup (MLflow)
@@ -151,6 +155,12 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
     if req.ticker not in latest.index:
         return ExplainLocalResponse(ticker=req.ticker, top_features=[])
     
+    # Align to training feature order (from feature_names.json)
+    if FEATURES:
+        latest = latest.reindex(columns=FEATURES).fillna(0.0)
+    else:
+        latest = latest.fillna(0.0)
+    
     xrow = latest.loc[[req.ticker]].values.reshape(1, -1)
     explainer = _explainer_cached()
     if explainer is None:
@@ -164,5 +174,17 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
     feats = latest.columns.tolist()
     pairs = sorted(zip(feats, map(float, vals)), key=lambda z: abs(z[1]), reverse=True)[:req.top_k]
     return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
+
+@app.post("/score_expected", response_model=ScoreResponse)
+def score_expected(req: ScoreExpectedRequest) -> ScoreResponse:
+    """Return latest expected alphas from `expected/expected_latest.parquet`."""
+    try:
+        latest = load_expected_latest("expected")  # 1-row, columns=tickers
+    except Exception:
+        return ScoreResponse(alpha={})
+    row = latest.iloc[-1]
+    if req.tickers:
+        row = row.reindex(req.tickers).dropna()
+    return ScoreResponse(alpha=row.astype(float).to_dict())
 
 
