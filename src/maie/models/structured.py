@@ -29,16 +29,14 @@ class StructuredModel:
         self.model: Optional[LGBMRegressor] = None
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> TrainResult:
-        X_np = X.values
-        y_np = y.values
-
         tscv = TimeSeriesSplit(n_splits=3)
         best_score = -np.inf
         best_model: Optional[LGBMRegressor] = None
 
-        for train_idx, val_idx in tscv.split(X_np):
-            X_tr, X_va = X_np[train_idx], X_np[val_idx]
-            y_tr, y_va = y_np[train_idx], y_np[val_idx]
+        for train_idx, val_idx in tscv.split(X):
+            # Keep DataFrame/Series to preserve feature names and silence sklearn warnings
+            X_tr, X_va = X.iloc[train_idx], X.iloc[val_idx]
+            y_tr, y_va = y.iloc[train_idx], y.iloc[val_idx]
 
             model = LGBMRegressor(
                 n_estimators=300,
@@ -48,6 +46,7 @@ class StructuredModel:
                 colsample_bytree=0.8,
                 random_state=self.random_state,
                 n_jobs=-1,
+                verbose=-1,
             )
             model.fit(X_tr, y_tr)
             preds = model.predict(X_va)
@@ -63,7 +62,8 @@ class StructuredModel:
     def predict(self, X: pd.DataFrame) -> pd.Series:
         if self.model is None:
             raise RuntimeError("Model not fit")
-        preds = self.model.predict(X.values)
+        # Pass DataFrame to keep feature names consistent and avoid warnings
+        preds = self.model.predict(X)
         return pd.Series(preds, index=X.index)
 
 
