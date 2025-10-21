@@ -14,6 +14,7 @@ from maie.features import build_features
 from maie.models import StructuredModel
 import mlflow
 import mlflow.pyfunc
+import mlflow.lightgbm
 
 
 app = FastAPI(title="MAIE API", version="0.1.0")
@@ -43,10 +44,16 @@ if os.path.exists("artifacts/feature_names.json"):
     except Exception:
         FEATURES = []
 
-ML_MODEL = None
+ML_MODEL = None  # pyfunc
+LGBM_MODEL = None  # native LightGBM model
 try:
     if MODEL_URI:
+        # Load both pyfunc (for prediction API) and native LightGBM flavor (for importance)
         ML_MODEL = mlflow.pyfunc.load_model(MODEL_URI)
+        try:
+            LGBM_MODEL = mlflow.lightgbm.load_model(MODEL_URI)
+        except Exception:
+            LGBM_MODEL = None
 except Exception:
     ML_MODEL = None
 
@@ -67,7 +74,11 @@ def score(req: ScoreRequest) -> ScoreResponse:
     X_last = X.loc[last_idx]
     if ML_MODEL is not None and FEATURES:
         X_aligned = X_last.reindex(columns=FEATURES).fillna(0.0)
-        pred = ML_MODEL.predict(X_aligned.values)
+        # Prefer native LightGBM model if available
+        if LGBM_MODEL is not None:
+            pred = LGBM_MODEL.predict(X_aligned.values)
+        else:
+            pred = ML_MODEL.predict(X_aligned.values)
         alpha = {asset: float(v) for asset, v in zip(X_aligned.index.tolist(), pred)}
     else:
         model = StructuredModel()
@@ -81,7 +92,17 @@ def score(req: ScoreRequest) -> ScoreResponse:
 def explain() -> ExplainResponse:
     out: Dict[str, float] = {}
     try:
-        if ML_MODEL and hasattr(ML_MODEL._model_impl, "get_booster"):
+        # Prefer native LightGBM estimator to access importances reliably
+        if LGBM_MODEL is not None:
+            if hasattr(LGBM_MODEL, "feature_importances_"):
+                names = FEATURES or [f"f{i}" for i in range(len(LGBM_MODEL.feature_importances_))]
+                out = {n: float(v) for n, v in zip(names, LGBM_MODEL.feature_importances_)}
+            elif hasattr(LGBM_MODEL, "booster_"):
+                booster = LGBM_MODEL.booster_
+                importance = booster.feature_importance(importance_type="gain")
+                names = booster.feature_name()
+                out = {n: float(v) for n, v in zip(names, importance)}
+        elif ML_MODEL and hasattr(ML_MODEL, "_model_impl") and hasattr(ML_MODEL._model_impl, "get_booster"):
             booster = ML_MODEL._model_impl.get_booster()
             importance = booster.feature_importance(importance_type="gain")
             names = booster.feature_name()
