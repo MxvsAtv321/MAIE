@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mxvsatv321/Documents/MAIE/mlruns/0/b0568d76545d442295ca4b3c37994fea/artifacts
+end_time: 1761082113628
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b0568d76545d442295ca4b3c37994fea
+run_name: structured_baseline
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761082110209
+status: 3
+tags: []
+user_id: mxvsatv321

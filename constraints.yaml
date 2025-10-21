@@ -9,4 +9,6 @@ enforce_beta_neutral: true
 enforce_sector_neutral: true
 turnover_gamma: 0.002
 beta_target: 0.0
+beta_tolerance: 0.001        # allow ±0.001 around beta target
+sector_tolerance: 0.0005     # allow ±0.0005 per sector
 

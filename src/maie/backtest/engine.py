@@ -47,6 +47,7 @@ class BacktestEngine:
         weights: pd.DataFrame,
         spread_bps: float = 5.0,
         output_dir: Optional[str] = None,
+        exposures_provider: Optional[callable] = None,
     ) -> Tuple[pd.Series, BacktestSummary]:
         rets = prices.pct_change().fillna(0.0)
         # Align
@@ -66,6 +67,38 @@ class BacktestEngine:
         if output_dir:
             out = Path(output_dir)
             out.mkdir(parents=True, exist_ok=True)
+            
+            # Compute diagnostics for each day
+            diagnostics = []
+            for dt in strategy_ret.index:
+                w_t = weights.loc[dt]
+                net = float(w_t.sum())
+                beta = np.nan
+                sector_l2 = np.nan
+                
+                if exposures_provider is not None:
+                    try:
+                        # Get exposures for this date
+                        expos = exposures_provider(dt, list(w_t.index), rets.loc[:dt].tail(60))
+                        if "MKT" in expos.index:
+                            beta = float((expos.loc["MKT", w_t.index] @ w_t.values))
+                        # Sector L2 norm
+                        E_sect = expos.drop(index="MKT", errors="ignore")
+                        if E_sect.shape[0] > 0:
+                            v = E_sect.loc[:, w_t.index] @ w_t.values
+                            sector_l2 = float(np.sqrt(np.square(v).sum()))
+                    except Exception:
+                        pass
+                
+                diagnostics.append({
+                    "ret": strategy_ret.loc[dt],
+                    "net": net,
+                    "beta": beta,
+                    "sector_l2": sector_l2
+                })
+            
+            diag_df = pd.DataFrame(diagnostics, index=strategy_ret.index)
+            
             # Iterate per YYYYMM
             months = strategy_ret.index.to_series().dt.strftime("%Y%m")
             for ym, idxs in months.groupby(months).groups.items():
@@ -75,6 +108,9 @@ class BacktestEngine:
                 # weights
                 wdf = weights.loc[idxs]
                 wdf.to_csv(out / f"weights_{ym}.csv")
+                # diagnostics cutout
+                diag_slice = diag_df.loc[idxs]
+                diag_slice.to_csv(out / f"cutout_ret_data_{ym}.csv")
         return strategy_ret, summary
 
 

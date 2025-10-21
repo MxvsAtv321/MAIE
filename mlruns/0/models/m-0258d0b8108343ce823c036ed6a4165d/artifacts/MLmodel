@@ -1,0 +1,21 @@
+artifact_path: file:///Users/mxvsatv321/Documents/MAIE/mlruns/0/models/m-0258d0b8108343ce823c036ed6a4165d/artifacts
+flavors:
+  lightgbm:
+    code: null
+    data: model.pkl
+    lgb_version: 4.6.0
+    model_class: lightgbm.sklearn.LGBMRegressor
+  python_function:
+    data: model.pkl
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.lightgbm
+    python_version: 3.13.5
+mlflow_version: 3.5.0
+model_id: m-0258d0b8108343ce823c036ed6a4165d
+model_size_bytes: 1247310
+model_uuid: m-0258d0b8108343ce823c036ed6a4165d
+prompts: null
+run_id: ad74f5fad9c44b1997ff99b2eddc10ad
+utc_time_created: '2025-10-21 21:16:01.285304'

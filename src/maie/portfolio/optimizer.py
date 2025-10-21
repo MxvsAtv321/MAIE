@@ -173,25 +173,33 @@ def qp_optimize(
     l_list.extend([-np.inf] * n + [-np.inf] * n)
     u_list.extend([cap] * n + [cap] * n)
 
-    # Factor neutrality
+    # Factor neutrality with tolerances
     if exposures is not None and exposures.size > 0:
+        beta_tol = float(cfg.get("beta_tolerance", 0.0))
+        sector_tol = float(cfg.get("sector_tolerance", 0.0))
+
         E_df = exposures.copy()
-        # Filter rows by flags
+        if not enforce_sector:
+            E_df = E_df.loc[[r for r in E_df.index if r in ("MKT",)]] if "MKT" in E_df.index else E_df.iloc[0:0]
         if not enforce_beta and "MKT" in E_df.index:
             E_df = E_df.drop(index="MKT")
-        if not enforce_sector:
-            # keep only MKT if requested, else none
-            if enforce_beta and "MKT" in exposures.index:
-                E_df = exposures.loc[["MKT"]]
-            else:
-                E_df = E_df.loc[E_df.index.intersection(["MKT"]) * 0]  # empty
+        if enforce_beta and not enforce_sector and "MKT" in exposures.index:
+            E_df = exposures.loc[["MKT"]]
 
         if E_df.shape[0] > 0:
-            E = sp.csr_matrix(E_df.reindex(columns=names).fillna(0.0).values)
+            E = sp.csr_matrix(E_df.reindex(columns=names).fillna(0.0).values)  # (k,n)
             row_E = sp.hstack([E, sp.csr_matrix((E.shape[0], n))]) if use_turnover else E
             rows.append(row_E)
-            targets = [beta_target if idx == "MKT" else 0.0 for idx in E_df.index]
-            l_list.extend(targets); u_list.extend(targets)
+            # For each factor row, set target ± tolerance (MKT uses beta_tol; others use sector_tol)
+            lE, uE = [], []
+            for ridx in E_df.index:
+                target = beta_target if ridx == "MKT" else 0.0
+                tol = beta_tol if ridx == "MKT" else sector_tol
+                if tol <= 0.0:
+                    lE.append(target); uE.append(target)          # equality
+                else:
+                    lE.append(target - tol); uE.append(target + tol)  # band
+            l_list.extend(lE); u_list.extend(uE)
 
     # Turnover L1 via auxiliary variables
     if use_turnover:

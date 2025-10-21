@@ -1,0 +1,10 @@
+artifact_location: file:///Users/mxvsatv321/Documents/MAIE/mlruns/0/models/m-0258d0b8108343ce823c036ed6a4165d/artifacts
+creation_timestamp: 1761081361281
+experiment_id: '0'
+last_updated_timestamp: 1761081362900
+model_id: m-0258d0b8108343ce823c036ed6a4165d
+model_type: null
+name: model
+source_run_id: ad74f5fad9c44b1997ff99b2eddc10ad
+status: 2
+status_message: null

@@ -46,7 +46,7 @@ def main() -> None:
     weights_df = pd.DataFrame(index=prices.index, columns=alphas.index, data=0.0)
     weights_df.loc[last_day:, :] = w.values
     engine = BacktestEngine(transaction_cost_bps=5.0)
-    strat_ret, summary = engine.run(prices, weights_df, output_dir="outputs_constraints")
+    strat_ret, summary = engine.run(prices, weights_df, output_dir="outputs_constraints", exposures_provider=exposures_provider)
     print("==== Constrained backtest summary ====")
     print(summary)
 
