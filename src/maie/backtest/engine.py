@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -45,6 +46,7 @@ class BacktestEngine:
         prices: pd.DataFrame,
         weights: pd.DataFrame,
         spread_bps: float = 5.0,
+        output_dir: Optional[str] = None,
     ) -> Tuple[pd.Series, BacktestSummary]:
         rets = prices.pct_change().fillna(0.0)
         # Align
@@ -59,6 +61,20 @@ class BacktestEngine:
         strategy_ret = daily_ret - tcost
 
         summary = self._compute_stats(strategy_ret)
+
+        # Optional monthly CSV exports
+        if output_dir:
+            out = Path(output_dir)
+            out.mkdir(parents=True, exist_ok=True)
+            # Iterate per YYYYMM
+            months = strategy_ret.index.to_series().dt.strftime("%Y%m")
+            for ym, idxs in months.groupby(months).groups.items():
+                # returns
+                sr = strategy_ret.loc[idxs]
+                sr.to_csv(out / f"returns_{ym}.csv", header=["ret"])
+                # weights
+                wdf = weights.loc[idxs]
+                wdf.to_csv(out / f"weights_{ym}.csv")
         return strategy_ret, summary
 
 

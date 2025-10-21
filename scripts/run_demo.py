@@ -37,7 +37,7 @@ def main() -> None:
     weights_df.loc[last_day:, :] = weights_last.values
 
     engine = BacktestEngine(transaction_cost_bps=5.0)
-    strat_ret, summary = engine.run(prices, weights_df, spread_bps=5.0)
+    strat_ret, summary = engine.run(prices, weights_df, spread_bps=5.0, output_dir="outputs")
 
     print("Demo Summary:")
     print(f"  Sharpe: {summary.sharpe:.2f}")
