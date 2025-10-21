@@ -10,6 +10,7 @@ import cvxpy as cp
 import scipy.sparse as sp
 import osqp
 import yaml
+from .schema import ConstraintConfig
 
 
 @dataclass
@@ -121,7 +122,8 @@ def qp_optimize(
     exposures: Optional[pd.DataFrame] = None,
     turnover_gamma: Optional[float] = None,
 ) -> pd.Series:
-    cfg = yaml.safe_load(open(constraints_yaml)) if constraints_yaml and len(constraints_yaml) else {}
+    cfg_raw = yaml.safe_load(open(constraints_yaml)) if constraints_yaml and len(constraints_yaml) else {}
+    cfg = ConstraintConfig(**cfg_raw).model_dump()
     names = expected.index
     n = len(names)
 

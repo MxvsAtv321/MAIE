@@ -1,4 +1,4 @@
-.PHONY: venv install lint test api demo build-expected bt-constrained report
+.PHONY: venv install lint test api demo build-expected bt-constrained report report-html
 
 venv:
 	uv venv .venv
@@ -32,5 +32,9 @@ bt-constrained: build-expected
 # Aggregate monthly outputs into a single CSV report (returns + diagnostics)
 report:
 	python scripts/make_report.py
+
+# Generate HTML PM report with charts and diagnostics
+report-html: report
+	python scripts/report_html.py
 
 

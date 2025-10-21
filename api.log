@@ -349,3 +349,73 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     127.0.0.1:60488 - "POST /score_expected HTTP/1.1" 200 OK
 INFO:     127.0.0.1:60494 - "POST /explain_local HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'src/maie/portfolio/optimizer.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75152]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 6061.13it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 7639.90it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 7733.81it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 8886.24it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 4262.50it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 4146.21it/s]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 2880.70it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 4236.67it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 4658.61it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 5706.54it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 5507.23it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 5202.56it/s]
+INFO:     Started server process [75333]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/maie/portfolio/optimizer.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75333]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 1883.39it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 3311.73it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 4243.82it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 5419.00it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 6188.11it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 5924.16it/s]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 2753.98it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 4366.79it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 5358.99it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 6432.98it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 7302.06it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 7013.89it/s]
+INFO:     Started server process [75342]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'services/api/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75342]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 2623.08it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 4299.65it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 5667.98it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 6881.55it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 7653.84it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 7214.15it/s]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 4899.89it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 7319.90it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 9432.47it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 9636.54it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 10285.20it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 9646.51it/s] 
+INFO:     Started server process [75350]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'services/api/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75350]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 2505.56it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 3802.63it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 5067.62it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 5884.68it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 6964.97it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 6640.76it/s]
+WARNING:  StatReload detected changes in 'services/api/main.py'. Reloading...
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 3612.66it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 4445.47it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 5814.65it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 7326.30it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 4906.77it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 4747.91it/s]
+INFO:     Started server process [75357]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 4655.17it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 5953.59it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 8019.70it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 8586.09it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 9279.43it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 8760.03it/s]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 4877.10it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 4586.45it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 5714.31it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 6743.25it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 7620.47it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 7319.90it/s]
+INFO:     Started server process [75364]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'tests/test_api_expected.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [75364]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 2288.22it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 3716.71it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 5039.21it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 6260.16it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 6983.52it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 6525.05it/s]
+Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]Downloading artifacts:   0%|          | 0/1 [00:00<?, ?it/s]
+Downloading artifacts:   0%|          | 0/5 [00:00<?, ?it/s]Downloading artifacts:  20%|██        | 1/5 [00:00<00:00, 2896.62it/s]Downloading artifacts:  40%|████      | 2/5 [00:00<00:00, 3283.21it/s]Downloading artifacts:  60%|██████    | 3/5 [00:00<00:00, 4069.51it/s]Downloading artifacts:  80%|████████  | 4/5 [00:00<00:00, 4489.49it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 5245.50it/s]Downloading artifacts: 100%|██████████| 5/5 [00:00<00:00, 5070.48it/s]
+INFO:     Started server process [75433]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:60640 - "POST /explain_local HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60645 - "POST /score_expected HTTP/1.1" 200 OK

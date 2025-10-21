@@ -161,12 +161,17 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
     else:
         latest = latest.fillna(0.0)
     
-    xrow = latest.loc[[req.ticker]].values.reshape(1, -1)
+    xrow = latest.loc[[req.ticker]]
     explainer = _explainer_cached()
     if explainer is None:
-        return ExplainLocalResponse(ticker=req.ticker, top_features=[])
+        # Graceful fallback: return top absolute standardized features (no SHAP)
+        s = xrow.iloc[0].abs().sort_values(ascending=False)
+        pairs = list(zip(s.index[:req.top_k].tolist(), s.values[:req.top_k].astype(float)))
+        return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
     
-    sv = explainer.shap_values(xrow)
+    xrow_values = xrow.values.reshape(1, -1)
+    
+    sv = explainer.shap_values(xrow_values)
     # LightGBM single output → sv is (n, d) or list; handle both
     if isinstance(sv, list):
         sv = sv[0]
