@@ -1,0 +1,73 @@
+[project]
+name = "maie"
+version = "0.1.0"
+description = "MAIE MVP: models + optimizer + backtester + API"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "MAIE", email = "noreply@example.com" }
+]
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "scipy>=1.11",
+  "scikit-learn>=1.5",
+  "lightgbm>=4.3",
+  "cvxpy>=1.4",
+  "osqp>=0.6",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "pydantic>=2.8"
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "black>=24.8",
+  "pytest>=8.3",
+  "pre-commit>=4.0"
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["maie*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+select = [
+  "E", "F", "I", "N", "W", "UP", "B", "A"
+]
+ignore = [
+  "E203",  # whitespace before ':' (black compatible)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+
+[tool.mypy]
+python_version = "3.13"
+disallow_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+no_implicit_optional = true
+strict_equality = true
+check_untyped_defs = true
+pretty = true
+
+
