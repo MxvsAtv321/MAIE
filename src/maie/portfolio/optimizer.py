@@ -97,10 +97,19 @@ class MeanVarianceOptimizer:
         if res.x is None:
             raise RuntimeError("Optimization failed")
         w = pd.Series(res.x, index=assets).clip(lower=-cap, upper=cap)
+        # Enforce exact net target by small adjustment
+        net_target = 0.0 if not self.long_only else 1.0
+        net_diff = float(w.sum() - net_target)
+        if abs(net_diff) > 1e-9:
+            w = w - net_diff / n
         # Normalize gross exposure if needed
         gross = w.abs().sum()
         if not self.long_only and gross > G:
             w *= G / (gross + 1e-12)
+        # Final tiny correction on net
+        net_diff = float(w.sum() - net_target)
+        if abs(net_diff) > 1e-9:
+            w = w - net_diff / n
         return OptimizeResult(weights=w, objective_value=float(res.info.obj_val))
 
 
