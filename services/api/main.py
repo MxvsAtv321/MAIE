@@ -30,7 +30,19 @@ app = FastAPI(title="MAIE API", version="0.1.0")
 EXPLAIN_FALLBACK = Counter("maie_explain_local_fallback_total", "Explain local path usage", ["kind"])
 QP_INFEASIBLE = Counter("maie_qp_infeasible_total", "Count of QP infeasible days observed")
 EXPECTED_TS = Gauge("maie_expected_latest_timestamp", "Unix timestamp of expected_latest.parquet")
+QP_INFEASIBLE_RATIO = Gauge("maie_qp_infeasible_ratio", "Ratio of days with QP infeasible solutions")
 maie_api_request_duration = Histogram('maie_api_request_duration_seconds', 'API request duration', ['endpoint'])
+
+# Initialize QP infeasibility ratio from backtest metrics
+try:
+    import json, pathlib
+    p = pathlib.Path("outputs_from_expected/metrics.json")
+    if p.exists():
+        meta = json.loads(p.read_text())
+        nd = max(1, int(meta.get("n_days", 0)))
+        QP_INFEASIBLE_RATIO.set(float(meta.get("infeasible_days", 0)) / nd)
+except Exception:
+    pass
 
 
 class ScoreRequest(BaseModel):

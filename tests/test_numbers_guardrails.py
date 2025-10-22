@@ -131,3 +131,24 @@ class TestNumbersGuardrails:
         # Check /explain_local latency
         explain_local_p95 = numbers.get("api", {}).get("explain_local", {}).get("p95_ms", 0.0)
         assert explain_local_p95 < 400, f"/explain_local P95 latency {explain_local_p95}ms exceeds 400ms limit"
+
+    def test_expected_metadata_coherence(self):
+        """Test that expected panel metadata is coherent."""
+        import json, datetime as dt
+        meta_path = Path("expected/metadata.json")
+        if not meta_path.exists():
+            pytest.skip("Expected metadata not found")
+        
+        meta = json.load(open(meta_path))
+        start = dt.date.fromisoformat(meta["start"])
+        end = dt.date.fromisoformat(meta["end"])
+        cal_days = (end - start).days + 1
+        n_unique = meta["n_unique_dates"]
+        
+        # Business day ratio sanity (loose bounds for synthetic calendars)
+        ratio = n_unique / max(1, cal_days)
+        assert 0.5 <= ratio <= 1.05, f"Unrealistic trading-day density: {ratio:.2f}"
+        
+        # If only 12 monthly files, expect roughly one year of data
+        if meta["n_files"] == 13:
+            assert 180 <= n_unique <= 320, f"With ~12 months of partitions, n_unique={n_unique} is suspicious"

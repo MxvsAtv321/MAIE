@@ -26,10 +26,16 @@ def main() -> None:
     # Collect file stats
     files = sorted([p for p in OUTDIR.glob("expected_*.parquet")])
     total_bytes = sum(p.stat().st_size for p in files) + (OUTDIR / "expected_latest.parquet").stat().st_size
+    
+    # Get unique dates for coherence check
+    idx = expected.index.unique().sort_values()
     meta = {
         "shape": [int(expected.shape[0]), int(expected.shape[1])],
-        "start": str(expected.index.min().date()) if expected.shape[0] else None,
-        "end": str(expected.index.max().date()) if expected.shape[0] else None,
+        "n_unique_dates": int(len(idx)),
+        "head_dates": [str(d.date()) for d in idx[:3]],
+        "tail_dates": [str(d.date()) for d in idx[-3:]],
+        "start": str(idx.min().date()) if len(idx) else None,
+        "end": str(idx.max().date()) if len(idx) else None,
         "n_files": int(len(files) + 1),
         "total_bytes": int(total_bytes),
         "build_seconds": float(build_seconds),

@@ -283,6 +283,19 @@ def main():
     bt_meta_path = base / "metrics.json"
     backtest_meta = json.loads(bt_meta_path.read_text()) if bt_meta_path.exists() else {}
     
+    # Check partition coherence
+    warnings = []
+    try:
+        import glob
+        parts = sorted(glob.glob("expected/expected_*.parquet"))
+        ym_from_files = {p.split("_")[-1].split(".")[0] for p in parts}
+        n_parts = len(ym_from_files)
+        if expected_meta:
+            if n_parts != max(0, expected_meta.get("n_files", 0) - 1):
+                warnings.append(f"Partition count mismatch: files={n_parts}, meta.n_files-1={expected_meta.get('n_files')-1}")
+    except Exception as e:
+        warnings.append(f"Partition check error: {e}")
+    
     # Extract all metrics
     numbers = {
         "metadata": {
@@ -300,7 +313,8 @@ def main():
         "explainability": extract_explainability_metrics(),
         "artifacts": extract_artifacts(),
         "expected_meta": expected_meta,
-        "backtest_meta": backtest_meta
+        "backtest_meta": backtest_meta,
+        "warnings": warnings
     }
     
     # Write to file
