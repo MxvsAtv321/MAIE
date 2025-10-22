@@ -87,6 +87,7 @@ This audit validates the MAIE quantitative trading system's production readiness
 
 ### High Severity
 - **None identified**
+{{ "**Dirty Git Tree**: Uncommitted changes detected - commit all changes before production deployment" if dirty_tree else "" }}
 
 ### Medium Severity
 - **None identified**

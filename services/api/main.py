@@ -31,6 +31,8 @@ EXPLAIN_FALLBACK = Counter("maie_explain_local_fallback_total", "Explain local p
 QP_INFEASIBLE = Counter("maie_qp_infeasible_total", "Count of QP infeasible days observed")
 EXPECTED_TS = Gauge("maie_expected_latest_timestamp", "Unix timestamp of expected_latest.parquet")
 QP_INFEASIBLE_RATIO = Gauge("maie_qp_infeasible_ratio", "Ratio of days with QP infeasible solutions")
+QP_SOLVE = Histogram("maie_qp_solve_seconds", "QP solve duration seconds")
+FEAT_SKEW = Counter("maie_feature_skew_total", "Count of feature alignment fixes")
 maie_api_request_duration = Histogram('maie_api_request_duration_seconds', 'API request duration', ['endpoint'])
 
 # Initialize QP infeasibility ratio from backtest metrics
@@ -226,6 +228,8 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
 
     # 2) Align columns to training feature order if we have it
     if FEATURES:
+        if list(X.columns) != FEATURES:
+            FEAT_SKEW.inc()
         X = X.reindex(columns=FEATURES)
 
     # 3) GUARANTEE the requested ticker has a row:

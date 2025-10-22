@@ -44,6 +44,15 @@ def render_audit_report():
     with open(numbers_path) as f:
         numbers = json.load(f)
     
+    # Check for dirty git tree
+    import subprocess
+    try:
+        dirty_output = subprocess.run(["git", "status", "--porcelain"], 
+                                    capture_output=True, text=True).stdout.strip()
+        dirty_tree = dirty_output != ""
+    except Exception:
+        dirty_tree = False
+    
     # Read the template
     template_path = Path("docs/audit_report.md")
     if not template_path.exists():

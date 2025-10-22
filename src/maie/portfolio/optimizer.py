@@ -220,7 +220,20 @@ def qp_optimize(
 
     prob = osqp.OSQP()
     prob.setup(P=P_big, q=q_big, A=A, l=l, u=u, verbose=False)
+    
+    # Solve with timing
+    import time
+    t0 = time.perf_counter()
     res = prob.solve()
+    solve_time = time.perf_counter() - t0
+    
+    # Record solve time metric (if available)
+    try:
+        from prometheus_client import Histogram
+        QP_SOLVE = Histogram("maie_qp_solve_seconds", "QP solve duration seconds")
+        QP_SOLVE.observe(solve_time)
+    except Exception:
+        pass
     sol = res.x[:n] if use_turnover else res.x
     status = getattr(getattr(res, "info", None), "status", "unknown")
     status_lower = str(status).lower()

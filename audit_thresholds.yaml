@@ -1,0 +1,18 @@
+# MAIE Production Release Criteria
+# Risk & performance
+sharpe_min: -0.10              # synthetic baseline; raise when on real data
+vol_ann_max: 0.50
+maxdd_max: 0.20
+turnover_daily_max: 0.15       # 15%/day
+hit_ratio_min: 0.45
+
+# Constraints & feasibility
+beta_tol: 0.001
+sector_tol: 0.0005
+neutrality_pass_rate_min: 0.99  # % days within tolerances
+qp_infeasible_ratio_max: 0.001  # ≤0.1% of days
+
+# Ops
+score_expected_p95_ms: 200
+explain_local_p95_ms: 400
+expected_freshness_hours: 36

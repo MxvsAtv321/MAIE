@@ -47,4 +47,15 @@ audit: bt-constrained
 perf:
 	pytest -q -k "perf" tests/test_perf_local.py
 
+# Run threshold checks
+check-thresholds:
+	python scripts/check_thresholds.py audit_thresholds.yaml docs/numbers.json
+
+# Run statistical validity checks
+stats-validity:
+	python scripts/stats_validity.py
+
+# Full production audit pipeline
+audit-full: bt-constrained report-html audit stats-validity check-thresholds
+
 
