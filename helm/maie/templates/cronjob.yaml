@@ -1,0 +1,34 @@
+{{- if .Values.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "maie.fullname" . }}-daily
+  labels:
+    {{- include "maie.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: {{ .Values.cronjob.restartPolicy }}
+          containers:
+            - name: runner
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              command: ["bash","-lc","make bt-constrained && make report-html"]
+              env:
+                - name: LOG_LEVEL
+                  value: "INFO"
+              volumeMounts:
+                - name: expected
+                  mountPath: /app/expected
+                - name: outputs
+                  mountPath: /app/outputs_from_expected
+          volumes:
+            - name: expected
+              persistentVolumeClaim:
+                claimName: {{ include "maie.fullname" . }}-expected
+            - name: outputs
+              persistentVolumeClaim:
+                claimName: {{ include "maie.fullname" . }}-outputs
+{{- end }}

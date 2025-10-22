@@ -1,0 +1,79 @@
+# Default values for maie
+replicaCount: 2
+
+image:
+  repository: ghcr.io/yourorg/yourrepo/maie-api
+  pullPolicy: Always
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: maie-api.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Environment variables
+env:
+  LOG_LEVEL: "INFO"
+  METRICS_ENABLED: "true"
+  READINESS_REQUIRE_MODEL: "false"
+  EXPECTED_DIR: "/data/expected"
+
+# Persistent volumes
+persistence:
+  expected:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+  artifacts:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  outputs:
+    enabled: true
+    size: 20Gi
+    storageClass: ""
+
+# CronJob configuration
+cronjob:
+  enabled: true
+  schedule: "15 22 * * MON-FRI"  # 10:15pm UTC weekdays
+  restartPolicy: OnFailure
+
+# Monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    path: /metrics

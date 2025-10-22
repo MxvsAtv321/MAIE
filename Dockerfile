@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake libomp-dev libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 
+# Create non-root user for security
+RUN useradd -m app && chown -R app:app /app
+
 # Workdir
 WORKDIR /app
 
@@ -24,7 +27,10 @@ RUN python -m pip install --upgrade pip wheel setuptools && \
     pip install -e . && \
     pip cache purge
 
+# Switch to non-root user
+USER app
+
 EXPOSE 8000
 ENV PORT=8000
 
-CMD ["uvicorn", "services.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "services/api/main:app", "--host", "0.0.0.0", "--port", "8000"]

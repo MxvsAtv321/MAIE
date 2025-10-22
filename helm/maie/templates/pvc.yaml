@@ -1,0 +1,53 @@
+{{- if .Values.persistence.expected.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "maie.fullname" . }}-expected
+  labels:
+    {{- include "maie.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.expected.size }}
+  {{- if .Values.persistence.expected.storageClass }}
+  storageClassName: {{ .Values.persistence.expected.storageClass }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.persistence.artifacts.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "maie.fullname" . }}-artifacts
+  labels:
+    {{- include "maie.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.artifacts.size }}
+  {{- if .Values.persistence.artifacts.storageClass }}
+  storageClassName: {{ .Values.persistence.artifacts.storageClass }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.persistence.outputs.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "maie.fullname" . }}-outputs
+  labels:
+    {{- include "maie.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.outputs.size }}
+  {{- if .Values.persistence.outputs.storageClass }}
+  storageClassName: {{ .Values.persistence.outputs.storageClass }}
+  {{- end }}
+{{- end }}

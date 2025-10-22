@@ -1,0 +1,43 @@
+name: Publish API Image
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set tags
+        id: vars
+        run: |
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          SHA=${{ github.sha }}
+          echo "IMG=ghcr.io/${REPO}/maie-api" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=${SHA::12}" >> $GITHUB_OUTPUT
+          echo "TAG_DATE=$(date +%Y.%m.%d)" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: |
+          docker build -t ${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_SHA }} \
+                       -t ${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_DATE }} \
+                       -t ${{ steps.vars.outputs.IMG }}:latest .
+
+      - name: Push
+        run: |
+          docker push ${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_SHA }}
+          docker push ${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_DATE }}
+          docker push ${{ steps.vars.outputs.IMG }}:latest
