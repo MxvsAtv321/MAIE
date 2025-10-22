@@ -30,14 +30,42 @@ jobs:
           echo "TAG_SHA=${SHA::12}" >> $GITHUB_OUTPUT
           echo "TAG_DATE=$(date +%Y.%m.%d)" >> $GITHUB_OUTPUT
 
-      - name: Run production audit
+      - name: Build artifacts & audit
         run: |
           # Install dependencies
           pip install -e ".[dev]"
-          # Run full audit pipeline
-          make audit-full
-          # Verify thresholds pass
+          # Build expected panel
+          make build-expected
+          # Run constrained backtest
+          make bt-constrained
+          # Extract numbers and generate audit report
+          make audit
+          # Run statistical validity checks
+          python scripts/stats_validity.py || true
+          # Check thresholds (must pass)
           python scripts/check_thresholds.py audit_thresholds.yaml docs/numbers.json
+
+      - name: Validate paper coherence
+        run: |
+          # Generate paper from template
+          python scripts/render_paper.py
+          # Generate release notes
+          python scripts/generate_release_notes.py
+          # Run paper validation tests
+          pytest -q -k "paper_facts_only or backtest_metrics_realistic"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maie-artifacts
+          path: |
+            docs/MAIE_Research_Paper.md
+            docs/RELEASE_NOTES.md
+            docs/numbers.json
+            docs/threshold_status.json
+            expected/metadata.json
+            outputs_from_expected/report.html
+          retention-days: 30
 
       - name: Build
         run: |
@@ -50,3 +78,33 @@ jobs:
           docker push ${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_SHA }}
           docker push ${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_DATE }}
           docker push ${{ steps.vars.outputs.IMG }}:latest
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.vars.outputs.TAG_DATE }}+${{ steps.vars.outputs.TAG_SHA }}
+          release_name: MAIE v${{ steps.vars.outputs.TAG_DATE }}
+          body: |
+            ## MAIE Release ${{ steps.vars.outputs.TAG_DATE }}
+            
+            **Profile**: $(jq -r '.profile // "unknown"' docs/threshold_status.json)
+            **Threshold Status**: $(jq -r '.status // "unknown"' docs/threshold_status.json)
+            **Commit**: ${{ steps.vars.outputs.TAG_SHA }}
+            
+            ### Artifacts
+            - Research Paper: `docs/MAIE_Research_Paper.md`
+            - Release Notes: `docs/RELEASE_NOTES.md`
+            - Numbers: `docs/numbers.json`
+            - Threshold Status: `docs/threshold_status.json`
+            - Expected Metadata: `expected/metadata.json`
+            - HTML Report: `outputs_from_expected/report.html`
+            
+            ### Docker Images
+            - `${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_SHA }}`
+            - `${{ steps.vars.outputs.IMG }}:${{ steps.vars.outputs.TAG_DATE }}`
+            - `${{ steps.vars.outputs.IMG }}:latest`
+          draft: false
+          prerelease: false

@@ -1,9 +1,9 @@
 # MAIE Production Audit Report
 
-**Generated**: $(date)  
-**Commit**: $(git rev-parse HEAD)  
-**Python**: $(python --version)  
-**OS**: $(uname -s) $(uname -m)  
+**Generated**: 2025-10-22T17:29:45.620111Z  
+**Commit**: 2715b3fee398c8666235183402ddca42882ac5ab  
+**Python**: Python 3.13.5  
+**OS**: Darwin arm64  
 
 ## Executive Summary
 
@@ -11,77 +11,77 @@ This audit validates the MAIE quantitative trading system's production readiness
 
 ## Run Metadata
 
-- **Commit SHA**: $(git rev-parse HEAD)
+- **Commit SHA**: 2715b3fee398c8666235183402ddca42882ac5ab
 - **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-- **Python Version**: $(python --version)
-- **OS**: $(uname -s) $(uname -m)
+- **Python Version**: Python 3.13.5
+- **OS**: Darwin arm64
 - **CPU**: $(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")
 - **Key Package Versions**: See `docs/numbers.json`
 
 ## Expected Panel Facts
 
-- **Shape**: $(jq -r '.expected_panel.shape' docs/numbers.json)
-- **Time Span**: $(jq -r '.expected_panel.start_date' docs/numbers.json) to $(jq -r '.expected_panel.end_date' docs/numbers.json)
-- **File Count**: $(jq -r '.expected_panel.file_count' docs/numbers.json)
-- **Total Bytes**: $(jq -r '.expected_panel.total_bytes' docs/numbers.json)
-- **Build Time**: $(jq -r '.expected_panel.build_time_seconds' docs/numbers.json) seconds
+- **Shape**: [1, 800]
+- **Time Span**: 2024-12-31 00:00:00 to 2024-12-31 00:00:00
+- **File Count**: 85
+- **Total Bytes**: 49280184
+- **Build Time**: 0.0 seconds
 
 ## Backtest Metrics
 
 ### Unconstrained Backtest
-- **Sharpe Ratio (Annualized)**: $(jq -r '.backtest.unconstrained.sharpe_annual' docs/numbers.json)
-- **Volatility (Annualized)**: $(jq -r '.backtest.unconstrained.vol_annual' docs/numbers.json)
-- **CAGR**: $(jq -r '.backtest.unconstrained.cagr' docs/numbers.json)
-- **Max Drawdown**: $(jq -r '.backtest.unconstrained.max_dd' docs/numbers.json)
-- **Turnover (%/day)**: $(jq -r '.backtest.unconstrained.turnover_pct_day' docs/numbers.json)
-- **Avg Gross Exposure**: $(jq -r '.backtest.unconstrained.avg_gross' docs/numbers.json)
-- **Hit Ratio**: $(jq -r '.backtest.unconstrained.hit_ratio' docs/numbers.json)
-- **Trades/day**: $(jq -r '.backtest.unconstrained.trades_per_day' docs/numbers.json)
+- **Sharpe Ratio (Annualized)**: -3.3844564489065965
+- **Volatility (Annualized)**: 0.003384456448905921
+- **CAGR**: -0.011389449291846487
+- **Max Drawdown**: -0.0009999999999998
+- **Turnover (%/day)**: 0.0
+- **Avg Gross Exposure**: 0.0
+- **Hit Ratio**: 0.0
+- **Trades/day**: 0.0
 
 ### Constrained Backtest
-- **Sharpe Ratio (Annualized)**: $(jq -r '.backtest.constrained.sharpe_annual' docs/numbers.json)
-- **Volatility (Annualized)**: $(jq -r '.backtest.constrained.vol_annual' docs/numbers.json)
-- **CAGR**: $(jq -r '.backtest.constrained.cagr' docs/numbers.json)
-- **Max Drawdown**: $(jq -r '.backtest.constrained.max_dd' docs/numbers.json)
-- **Turnover (%/day)**: $(jq -r '.backtest.constrained.turnover_pct_day' docs/numbers.json)
-- **Avg Gross Exposure**: $(jq -r '.backtest.constrained.avg_gross' docs/numbers.json)
-- **Hit Ratio**: $(jq -r '.backtest.constrained.hit_ratio' docs/numbers.json)
-- **Trades/day**: $(jq -r '.backtest.constrained.trades_per_day' docs/numbers.json)
+- **Sharpe Ratio (Annualized)**: -3.3844564489065965
+- **Volatility (Annualized)**: 0.003384456448905921
+- **CAGR**: -0.011389449291846487
+- **Max Drawdown**: -0.0009999999999998
+- **Turnover (%/day)**: 0.0
+- **Avg Gross Exposure**: 0.0
+- **Hit Ratio**: 0.0
+- **Trades/day**: 0.0
 
 ## Constraint Residuals
 
-- **Max |Net Exposure|**: $(jq -r '.constraints.max_net_exposure' docs/numbers.json)
-- **Mean |Net Exposure|**: $(jq -r '.constraints.mean_net_exposure' docs/numbers.json)
-- **Max |β - Target|**: $(jq -r '.constraints.max_beta_deviation' docs/numbers.json)
-- **Mean |β - Target|**: $(jq -r '.constraints.mean_beta_deviation' docs/numbers.json)
-- **Max Sector L2**: $(jq -r '.constraints.max_sector_l2' docs/numbers.json)
-- **Mean Sector L2**: $(jq -r '.constraints.mean_sector_l2' docs/numbers.json)
-- **Infeasible Days**: $(jq -r '.constraints.infeasible_days' docs/numbers.json) ($(jq -r '.constraints.infeasible_pct' docs/numbers.json)% of total)
+- **Max |Net Exposure|**: 0.0046160679634165
+- **Mean |Net Exposure|**: 0.00020982127106438636
+- **Max |β - Target|**: 0.0032994042793812
+- **Mean |β - Target|**: 0.00014997292179005456
+- **Max Sector L2**: 0.0023495940440238
+- **Mean Sector L2**: 0.00010679972927380908
+- **Infeasible Days**: 0 (0.0% of total)
 
 ## API Performance
 
-- **/score_expected Median Latency**: $(jq -r '.api.score_expected.median_ms' docs/numbers.json)ms
-- **/score_expected P95 Latency**: $(jq -r '.api.score_expected.p95_ms' docs/numbers.json)ms
-- **/score_expected Error Rate**: $(jq -r '.api.score_expected.error_rate' docs/numbers.json)%
-- **/explain_local Median Latency**: $(jq -r '.api.explain_local.median_ms' docs/numbers.json)ms
-- **/explain_local P95 Latency**: $(jq -r '.api.explain_local.p95_ms' docs/numbers.json)ms
-- **/explain_local Error Rate**: $(jq -r '.api.explain_local.error_rate' docs/numbers.json)%
+- **/score_expected Median Latency**: 0.0ms
+- **/score_expected P95 Latency**: 0.0ms
+- **/score_expected Error Rate**: 0.0%
+- **/explain_local Median Latency**: 0.0ms
+- **/explain_local P95 Latency**: 0.0ms
+- **/explain_local Error Rate**: 0.0%
 
 ## Explainability Check
 
-- **Non-empty Results**: $(jq -r '.explainability.non_empty_rate' docs/numbers.json)%
-- **Pred_contrib Success Rate**: $(jq -r '.explainability.pred_contrib_rate' docs/numbers.json)%
-- **TreeExplainer Fallback Rate**: $(jq -r '.explainability.tree_explainer_rate' docs/numbers.json)%
-- **Magnitude Fallback Rate**: $(jq -r '.explainability.magnitude_rate' docs/numbers.json)%
+- **Non-empty Results**: 100.0%
+- **Pred_contrib Success Rate**: 0.0%
+- **TreeExplainer Fallback Rate**: 0.0%
+- **Magnitude Fallback Rate**: 0.0%
 
 ## Artifacts
 
-- **Reports Generated**: $(jq -r '.artifacts.reports | length' docs/numbers.json)
-- **CSV Files**: $(jq -r '.artifacts.csv_files | length' docs/numbers.json)
-- **Parquet Files**: $(jq -r '.artifacts.parquet_files | length' docs/numbers.json)
-- **Total Size**: $(jq -r '.artifacts.total_size_bytes' docs/numbers.json) bytes
-- **First Date**: $(jq -r '.artifacts.first_date' docs/numbers.json)
-- **Last Date**: $(jq -r '.artifacts.last_date' docs/numbers.json)
+- **Reports Generated**: 1
+- **CSV Files**: 253
+- **Parquet Files**: 0
+- **Total Size**: 6639932 bytes
+- **First Date**: 2024-01-01
+- **Last Date**: 2024-12-31
 
 ## Known Limitations & Risks
 

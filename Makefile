@@ -58,4 +58,14 @@ stats-validity:
 # Full production audit pipeline
 audit-full: bt-constrained report-html audit stats-validity check-thresholds
 
+# Generate research paper
+paper: audit
+	python scripts/render_paper.py
+	@echo "Paper generated at docs/MAIE_Research_Paper.md"
+
+# Generate release notes
+release-notes: audit
+	python scripts/generate_release_notes.py
+	@echo "Release notes generated at docs/RELEASE_NOTES.md"
+
 

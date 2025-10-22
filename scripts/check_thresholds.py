@@ -10,9 +10,20 @@ from pathlib import Path
 from typing import Dict, Any
 
 def load_thresholds(thresholds_file: str) -> Dict[str, Any]:
-    """Load threshold configuration."""
+    """Load threshold configuration with profile support."""
     with open(thresholds_file) as f:
-        return yaml.safe_load(f)
+        data = yaml.safe_load(f)
+    
+    # Get profile (default to 'dev' if not specified)
+    profile = data.get('profile', 'dev')
+    
+    # Get thresholds for the profile
+    if profile in data:
+        thresholds = data[profile]
+        thresholds['_profile'] = profile  # Include profile in output
+        return thresholds
+    else:
+        raise ValueError(f"Profile '{profile}' not found in thresholds file")
 
 def load_numbers(numbers_file: str) -> Dict[str, Any]:
     """Load audit numbers."""
@@ -127,11 +138,25 @@ def main():
         
         if passed:
             print("✅ All thresholds PASSED")
+            # Write pass status to a file for the paper to reference
+            with open("docs/threshold_status.json", "w") as f:
+                json.dump({
+                    "status": "PASSED", 
+                    "violations": [],
+                    "profile": thresholds.get("_profile", "unknown")
+                }, f, indent=2)
             sys.exit(0)
         else:
             print("❌ Threshold violations:")
             for violation in violations:
                 print(f"  - {violation}")
+            # Write fail status with violations
+            with open("docs/threshold_status.json", "w") as f:
+                json.dump({
+                    "status": "FAILED", 
+                    "violations": violations,
+                    "profile": thresholds.get("_profile", "unknown")
+                }, f, indent=2)
             sys.exit(1)
             
     except Exception as e:

@@ -246,39 +246,39 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
     xrow = X.loc[[want_upper]]
     features_order = xrow.columns.tolist()
 
-        # 4) Fast path: LightGBM native SHAP via pred_contrib
-        booster = _get_booster()
-        if booster is not None:
-            try:
-                contrib = booster.predict(xrow.values, pred_contrib=True)  # shape: (1, d+1) w/ bias last
-                vals = contrib[0][:-1]  # drop bias term
-                pairs = sorted(
-                    zip(features_order, map(float, vals)),
-                    key=lambda z: abs(z[1]),
-                    reverse=True
-                )[:req.top_k]
-                EXPLAIN_FALLBACK.labels(kind="pred_contrib").inc()
-                return ExplainLocalResponse(ticker=want, top_features=pairs)
-            except Exception:
-                pass  # fall through to slower paths
+    # 4) Fast path: LightGBM native SHAP via pred_contrib
+    booster = _get_booster()
+    if booster is not None:
+        try:
+            contrib = booster.predict(xrow.values, pred_contrib=True)  # shape: (1, d+1) w/ bias last
+            vals = contrib[0][:-1]  # drop bias term
+            pairs = sorted(
+                zip(features_order, map(float, vals)),
+                key=lambda z: abs(z[1]),
+                reverse=True
+            )[:req.top_k]
+            EXPLAIN_FALLBACK.labels(kind="pred_contrib").inc()
+            return ExplainLocalResponse(ticker=want, top_features=pairs)
+        except Exception:
+            pass  # fall through to slower paths
 
-        # 5) Slow path: SHAP TreeExplainer if available
-        explainer = _explainer_cached()
-        if explainer is not None:
-            try:
-                sv = explainer.shap_values(xrow.values)
-                if isinstance(sv, list):
-                    sv = sv[0]
-                vals = sv[0]
-                pairs = sorted(
-                    zip(features_order, map(float, vals)),
-                    key=lambda z: abs(z[1]),
-                    reverse=True
-                )[:req.top_k]
-                EXPLAIN_FALLBACK.labels(kind="tree").inc()
-                return ExplainLocalResponse(ticker=want, top_features=pairs)
-            except Exception:
-                pass
+    # 5) Slow path: SHAP TreeExplainer if available
+    explainer = _explainer_cached()
+    if explainer is not None:
+        try:
+            sv = explainer.shap_values(xrow.values)
+            if isinstance(sv, list):
+                sv = sv[0]
+            vals = sv[0]
+            pairs = sorted(
+                zip(features_order, map(float, vals)),
+                key=lambda z: abs(z[1]),
+                reverse=True
+            )[:req.top_k]
+            EXPLAIN_FALLBACK.labels(kind="tree").inc()
+            return ExplainLocalResponse(ticker=want, top_features=pairs)
+        except Exception:
+            pass
 
     # 6) Guaranteed fallback: magnitude ranking of standardized features
     mags = xrow.iloc[0].abs().sort_values(ascending=False)
@@ -294,13 +294,13 @@ def score_expected(req: ScoreExpectedRequest) -> ScoreResponse:
         latest = load_expected_latest(settings.EXPECTED_DIR)  # 1-row snapshot
         # update freshness gauge
         EXPECTED_TS.set(float(latest.index.max().timestamp()))
+        row = latest.iloc[-1]
+        if req.tickers:
+            row = row.reindex(req.tickers).dropna()
+        
+        return ScoreResponse(alpha=row.astype(float).to_dict())
     except Exception:
         return ScoreResponse(alpha={})
-    row = latest.iloc[-1]
-    if req.tickers:
-        row = row.reindex(req.tickers).dropna()
-    
-    return ScoreResponse(alpha=row.astype(float).to_dict())
     finally:
         duration = time.time() - start_time
         maie_api_request_duration.labels(endpoint="score_expected").observe(duration)

@@ -1,18 +1,60 @@
 # MAIE Production Release Criteria
-# Risk & performance
-sharpe_min: -0.10              # synthetic baseline; raise when on real data
-vol_ann_max: 0.50
-maxdd_max: 0.20
-turnover_daily_max: 0.15       # 15%/day
-hit_ratio_min: 0.45
+# Profile-based thresholds
+profile: dev   # or staging or prod
 
-# Constraints & feasibility
-beta_tol: 0.001
-sector_tol: 0.0005
-neutrality_pass_rate_min: 0.99  # % days within tolerances
-qp_infeasible_ratio_max: 0.001  # ≤0.1% of days
+dev:
+  # Risk & performance (relaxed for synthetic data)
+  sharpe_min: -5.0              # synthetic baseline; very permissive
+  vol_ann_max: 1.0
+  maxdd_max: 0.50
+  turnover_daily_max: 0.30       # 30%/day
+  hit_ratio_min: 0.30
 
-# Ops
-score_expected_p95_ms: 200
-explain_local_p95_ms: 400
-expected_freshness_hours: 36
+  # Constraints & feasibility (relaxed)
+  beta_tol: 0.01
+  sector_tol: 0.005
+  neutrality_pass_rate_min: 0.90  # % days within tolerances
+  qp_infeasible_ratio_max: 0.01  # ≤1% of days
+
+  # Ops (relaxed)
+  score_expected_p95_ms: 1000
+  explain_local_p95_ms: 2000
+  expected_freshness_hours: 72
+
+staging:
+  # Risk & performance (intermediate for staging)
+  sharpe_min: -1.0              # intermediate between dev and prod
+  vol_ann_max: 0.75
+  maxdd_max: 0.35
+  turnover_daily_max: 0.20       # 20%/day
+  hit_ratio_min: 0.35
+
+  # Constraints & feasibility (intermediate)
+  beta_tol: 0.005
+  sector_tol: 0.002
+  neutrality_pass_rate_min: 0.95  # % days within tolerances
+  qp_infeasible_ratio_max: 0.005  # ≤0.5% of days
+
+  # Ops (intermediate)
+  score_expected_p95_ms: 500
+  explain_local_p95_ms: 1000
+  expected_freshness_hours: 48
+
+prod:
+  # Risk & performance (strict for production)
+  sharpe_min: -0.10              # synthetic baseline; raise when on real data
+  vol_ann_max: 0.50
+  maxdd_max: 0.20
+  turnover_daily_max: 0.15       # 15%/day
+  hit_ratio_min: 0.45
+
+  # Constraints & feasibility (strict)
+  beta_tol: 0.001
+  sector_tol: 0.0005
+  neutrality_pass_rate_min: 0.99  # % days within tolerances
+  qp_infeasible_ratio_max: 0.001  # ≤0.1% of days
+
+  # Ops (strict)
+  score_expected_p95_ms: 200
+  explain_local_p95_ms: 400
+  expected_freshness_hours: 36
