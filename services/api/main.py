@@ -20,9 +20,17 @@ import shap
 from functools import lru_cache
 from prometheus_fastapi_instrumentator import Instrumentator
 from maie.config import settings
+import time
+from prometheus_client import Counter, Gauge, Histogram
 
 
 app = FastAPI(title="MAIE API", version="0.1.0")
+
+# Custom metrics
+EXPLAIN_FALLBACK = Counter("maie_explain_local_fallback_total", "Explain local path usage", ["kind"])
+QP_INFEASIBLE = Counter("maie_qp_infeasible_total", "Count of QP infeasible days observed")
+EXPECTED_TS = Gauge("maie_expected_latest_timestamp", "Unix timestamp of expected_latest.parquet")
+maie_api_request_duration = Histogram('maie_api_request_duration_seconds', 'API request duration', ['endpoint'])
 
 
 class ScoreRequest(BaseModel):
@@ -222,54 +230,64 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
     xrow = X.loc[[want_upper]]
     features_order = xrow.columns.tolist()
 
-    # 4) Fast path: LightGBM native SHAP via pred_contrib
-    booster = _get_booster()
-    if booster is not None:
-        try:
-            contrib = booster.predict(xrow.values, pred_contrib=True)  # shape: (1, d+1) w/ bias last
-            vals = contrib[0][:-1]  # drop bias term
-            pairs = sorted(
-                zip(features_order, map(float, vals)),
-                key=lambda z: abs(z[1]),
-                reverse=True
-            )[:req.top_k]
-            return ExplainLocalResponse(ticker=want, top_features=pairs)
-        except Exception:
-            pass  # fall through to slower paths
+        # 4) Fast path: LightGBM native SHAP via pred_contrib
+        booster = _get_booster()
+        if booster is not None:
+            try:
+                contrib = booster.predict(xrow.values, pred_contrib=True)  # shape: (1, d+1) w/ bias last
+                vals = contrib[0][:-1]  # drop bias term
+                pairs = sorted(
+                    zip(features_order, map(float, vals)),
+                    key=lambda z: abs(z[1]),
+                    reverse=True
+                )[:req.top_k]
+                EXPLAIN_FALLBACK.labels(kind="pred_contrib").inc()
+                return ExplainLocalResponse(ticker=want, top_features=pairs)
+            except Exception:
+                pass  # fall through to slower paths
 
-    # 5) Slow path: SHAP TreeExplainer if available
-    explainer = _explainer_cached()
-    if explainer is not None:
-        try:
-            sv = explainer.shap_values(xrow.values)
-            if isinstance(sv, list):
-                sv = sv[0]
-            vals = sv[0]
-            pairs = sorted(
-                zip(features_order, map(float, vals)),
-                key=lambda z: abs(z[1]),
-                reverse=True
-            )[:req.top_k]
-            return ExplainLocalResponse(ticker=want, top_features=pairs)
-        except Exception:
-            pass
+        # 5) Slow path: SHAP TreeExplainer if available
+        explainer = _explainer_cached()
+        if explainer is not None:
+            try:
+                sv = explainer.shap_values(xrow.values)
+                if isinstance(sv, list):
+                    sv = sv[0]
+                vals = sv[0]
+                pairs = sorted(
+                    zip(features_order, map(float, vals)),
+                    key=lambda z: abs(z[1]),
+                    reverse=True
+                )[:req.top_k]
+                EXPLAIN_FALLBACK.labels(kind="tree").inc()
+                return ExplainLocalResponse(ticker=want, top_features=pairs)
+            except Exception:
+                pass
 
     # 6) Guaranteed fallback: magnitude ranking of standardized features
     mags = xrow.iloc[0].abs().sort_values(ascending=False)
     pairs = list(zip(mags.index[:req.top_k].tolist(), mags.values[:req.top_k].astype(float)))
+    EXPLAIN_FALLBACK.labels(kind="magnitude").inc()
     return ExplainLocalResponse(ticker=want, top_features=pairs)
 
 @app.post("/score_expected", response_model=ScoreResponse)
 def score_expected(req: ScoreExpectedRequest) -> ScoreResponse:
     """Return latest expected alphas from `expected/expected_latest.parquet`."""
+    start_time = time.time()
     try:
         latest = load_expected_latest(settings.EXPECTED_DIR)  # 1-row snapshot
+        # update freshness gauge
+        EXPECTED_TS.set(float(latest.index.max().timestamp()))
     except Exception:
         return ScoreResponse(alpha={})
     row = latest.iloc[-1]
     if req.tickers:
         row = row.reindex(req.tickers).dropna()
+    
     return ScoreResponse(alpha=row.astype(float).to_dict())
+    finally:
+        duration = time.time() - start_time
+        maie_api_request_duration.labels(endpoint="score_expected").observe(duration)
 
 # Prometheus metrics (enabled by default)
 if settings.METRICS_ENABLED:

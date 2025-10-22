@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Tuple, Optional
 from pathlib import Path
+import json
 
 import numpy as np
 import pandas as pd
@@ -62,6 +63,9 @@ class BacktestEngine:
         strategy_ret = daily_ret - tcost
 
         summary = self._compute_stats(strategy_ret)
+        
+        # Track infeasible solves from optimizer metadata
+        infeasible_days = 0
 
         # Optional monthly CSV exports
         if output_dir:
@@ -72,6 +76,11 @@ class BacktestEngine:
             diagnostics = []
             for dt in strategy_ret.index:
                 w_t = weights.loc[dt]
+                # Track infeasibility flag from optimizer
+                infeasible = bool(getattr(getattr(w_t, "attrs", {}), "get", lambda *_: False)("infeasible", False)) \
+                             or bool(getattr(w_t, "attrs", {}).get("infeasible", False))
+                if infeasible:
+                    infeasible_days += 1
                 net = float(w_t.sum())
                 beta = np.nan
                 sector_l2 = np.nan
@@ -111,6 +120,14 @@ class BacktestEngine:
                 # diagnostics cutout
                 diag_slice = diag_df.loc[idxs]
                 diag_slice.to_csv(out / f"cutout_ret_data_{ym}.csv")
+            
+            # Persist minimal metrics alongside monthly CSVs
+            meta = {
+                "n_days": int(len(strategy_ret)),
+                "infeasible_days": int(infeasible_days),
+            }
+            (out / "metrics.json").write_text(json.dumps(meta, indent=2))
+        
         return strategy_ret, summary
 
 

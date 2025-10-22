@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 from pathlib import Path
-import base64, io
+import base64, io, json, subprocess, os, datetime as dt
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -25,6 +25,15 @@ def main() -> None:
     if not report_csv.exists():
         raise FileNotFoundError(f"{report_csv} not found. Run `make report` first.")
     df = pd.read_csv(report_csv, parse_dates=["date"]).set_index("date").sort_index()
+    
+    # metadata
+    commit = (subprocess.run(["git","rev-parse","--short","HEAD"], capture_output=True, text=True).stdout or "").strip()
+    model_uri = os.getenv("MLFLOW_MODEL_URI","") or (Path("artifacts/structured_model_uri.txt").read_text().strip() if (Path("artifacts/structured_model_uri.txt")).exists() else "")
+    exp_meta = {}
+    if (Path("expected/metadata.json")).exists():
+        exp_meta = json.loads(Path("expected/metadata.json").read_text())
+    exp_ts = df.index.max().strftime("%Y-%m-%d") if len(df) else "NA"
+    now = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
     # Cum P&L curve
     cum = (1.0 + df["ret"].fillna(0.0)).cumprod()
@@ -72,6 +81,21 @@ th{{background:#fafafa;text-align:left}}
 
 </body></html>
 """
+    # Add metadata to HTML
+    html = html.replace("</body></html>", f"""
+    <div class="card"><h3>Run Metadata</h3>
+    <ul>
+      <li><b>Build time:</b> {exp_meta.get('build_seconds','NA')} s</li>
+      <li><b>Expected rows×cols:</b> {exp_meta.get('shape','NA')}</li>
+      <li><b>Expected span:</b> {exp_meta.get('start','NA')} → {exp_meta.get('end','NA')}</li>
+      <li><b>Commit:</b> {commit}</li>
+      <li><b>Model URI:</b> {model_uri}</li>
+      <li><b>Generated:</b> {now}</li>
+    </ul>
+    </div>
+    </body></html>
+    """)
+    
     out = base / "report.html"
     out.write_text(html)
     print(f"Wrote {out.resolve()}")

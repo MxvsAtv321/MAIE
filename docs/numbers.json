@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "commit_sha": "",
+    "timestamp": "",
+    "python_version": "",
+    "os": "",
+    "cpu": "",
+    "package_versions": {}
+  },
+  "expected_panel": {
+    "shape": [0, 0],
+    "start_date": "",
+    "end_date": "",
+    "file_count": 0,
+    "total_bytes": 0,
+    "build_time_seconds": 0.0
+  },
+  "backtest": {
+    "unconstrained": {
+      "sharpe_annual": 0.0,
+      "vol_annual": 0.0,
+      "cagr": 0.0,
+      "max_dd": 0.0,
+      "turnover_pct_day": 0.0,
+      "avg_gross": 0.0,
+      "hit_ratio": 0.0,
+      "trades_per_day": 0.0
+    },
+    "constrained": {
+      "sharpe_annual": 0.0,
+      "vol_annual": 0.0,
+      "cagr": 0.0,
+      "max_dd": 0.0,
+      "turnover_pct_day": 0.0,
+      "avg_gross": 0.0,
+      "hit_ratio": 0.0,
+      "trades_per_day": 0.0
+    }
+  },
+  "constraints": {
+    "max_net_exposure": 0.0,
+    "mean_net_exposure": 0.0,
+    "max_beta_deviation": 0.0,
+    "mean_beta_deviation": 0.0,
+    "max_sector_l2": 0.0,
+    "mean_sector_l2": 0.0,
+    "infeasible_days": 0,
+    "infeasible_pct": 0.0
+  },
+  "api": {
+    "score_expected": {
+      "median_ms": 0.0,
+      "p95_ms": 0.0,
+      "error_rate": 0.0
+    },
+    "explain_local": {
+      "median_ms": 0.0,
+      "p95_ms": 0.0,
+      "error_rate": 0.0
+    }
+  },
+  "explainability": {
+    "non_empty_rate": 0.0,
+    "pred_contrib_rate": 0.0,
+    "tree_explainer_rate": 0.0,
+    "magnitude_rate": 0.0
+  },
+  "artifacts": {
+    "reports": [],
+    "csv_files": [],
+    "parquet_files": [],
+    "total_size_bytes": 0,
+    "first_date": "",
+    "last_date": ""
+  }
+}

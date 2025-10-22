@@ -37,4 +37,14 @@ report:
 report-html: report
 	python scripts/report_html.py
 
+# Run production audit and extract numbers
+audit: bt-constrained
+	python scripts/extract_numbers.py
+	python scripts/render_audit_report.py
+	@echo "Audit completed. Check docs/audit_report.md and docs/numbers.json"
+
+# Run performance tests
+perf:
+	pytest -q -k "perf" tests/test_perf_local.py
+
 

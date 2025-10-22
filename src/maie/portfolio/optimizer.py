@@ -222,7 +222,15 @@ def qp_optimize(
     prob.setup(P=P_big, q=q_big, A=A, l=l, u=u, verbose=False)
     res = prob.solve()
     sol = res.x[:n] if use_turnover else res.x
+    status = getattr(getattr(res, "info", None), "status", "unknown")
+    status_lower = str(status).lower()
     w = pd.Series(sol, index=names).clip(lower=-cap, upper=cap)
+    # Attach metadata without changing signature
+    try:
+        w.attrs["solve_status"] = status
+        w.attrs["infeasible"] = ("infeasible" in status_lower) or ("unbounded" in status_lower)
+    except Exception:
+        pass
 
     gross = w.abs().sum()
     if gross > G:

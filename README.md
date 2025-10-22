@@ -28,6 +28,21 @@ python scripts/run_demo.py
 uvicorn services.api.main:app --reload --port 8000
 ```
 
+## Numbers & SLOs
+
+For production numbers validation and audit reports, see:
+- **Audit Report**: `docs/audit_report.md` - Comprehensive production audit with metrics
+- **Numbers Data**: `docs/numbers.json` - Machine-readable metrics and KPIs
+- **Run Audit**: `make audit` - Extract numbers and generate audit report
+- **Performance Tests**: `make perf` - Run performance benchmarks
+
+### Key SLOs
+- **API Latency**: `/score_expected` P95 < 200ms, `/explain_local` P95 < 400ms
+- **Constraint Satisfaction**: Neutrality within tolerances on ≥99% of days
+- **QP Infeasibility**: ≤ 0.1% of backtest days
+- **Expected Panel Freshness**: < 36h old
+- **Explainability**: Non-empty results for all ticker requests
+
 Open `http://127.0.0.1:8000/docs` and call `POST /score`.
 
 ## Structure
