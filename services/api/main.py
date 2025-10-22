@@ -92,6 +92,16 @@ try:
 except Exception:
     ML_MODEL = None
 
+def _get_booster():
+    """Return a native LightGBM Booster if available, else None."""
+    if LGBM_MODEL is not None and hasattr(LGBM_MODEL, "booster_"):
+        return LGBM_MODEL.booster_
+    if ML_MODEL is not None and hasattr(ML_MODEL._model_impl, "get_booster"):
+        try:
+            return ML_MODEL._model_impl.get_booster()
+        except Exception:
+            return None
+    return None
 
 @app.get("/health")
 def health() -> dict[str, str]:
@@ -198,22 +208,36 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
         latest = latest.fillna(0.0)
     
     xrow = latest.loc[[req.ticker]]
+
+    # 1) Fast path: native LightGBM SHAP via pred_contrib=True (includes bias as last col)
+    booster = _get_booster()
+    if booster is not None:
+        try:
+            contrib = booster.predict(xrow.values, pred_contrib=True)
+            vals = contrib[0][:-1]  # drop bias term
+            feats = xrow.columns.tolist()
+            pairs = sorted(zip(feats, map(float, vals)), key=lambda z: abs(z[1]), reverse=True)[:req.top_k]
+            return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
+        except Exception:
+            pass
+
+    # 2) Slow path: SHAP TreeExplainer (if it can initialize)
     explainer = _explainer_cached()
-    if explainer is None:
-        # Graceful fallback: return top absolute standardized features (no SHAP)
-        s = xrow.iloc[0].abs().sort_values(ascending=False)
-        pairs = list(zip(s.index[:req.top_k].tolist(), s.values[:req.top_k].astype(float)))
-        return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
-    
-    xrow_values = xrow.values.reshape(1, -1)
-    
-    sv = explainer.shap_values(xrow_values)
-    # LightGBM single output → sv is (n, d) or list; handle both
-    if isinstance(sv, list):
-        sv = sv[0]
-    vals = sv[0]
-    feats = latest.columns.tolist()
-    pairs = sorted(zip(feats, map(float, vals)), key=lambda z: abs(z[1]), reverse=True)[:req.top_k]
+    if explainer is not None:
+        try:
+            sv = explainer.shap_values(xrow.values)
+            if isinstance(sv, list):
+                sv = sv[0]
+            vals = sv[0]
+            feats = xrow.columns.tolist()
+            pairs = sorted(zip(feats, map(float, vals)), key=lambda z: abs(z[1]), reverse=True)[:req.top_k]
+            return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
+        except Exception:
+            pass
+
+    # 3) Guaranteed fallback: magnitude ranking (never empty)
+    s = xrow.iloc[0].abs().sort_values(ascending=False)
+    pairs = list(zip(s.index[:req.top_k].tolist(), s.values[:req.top_k].astype(float)))
     return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
 
 @app.post("/score_expected", response_model=ScoreResponse)
