@@ -18,6 +18,8 @@ import mlflow.pyfunc
 import mlflow.lightgbm
 import shap
 from functools import lru_cache
+from prometheus_fastapi_instrumentator import Instrumentator
+from maie.config import settings
 
 
 app = FastAPI(title="MAIE API", version="0.1.0")
@@ -47,17 +49,35 @@ class ScoreExpectedRequest(BaseModel):
     tickers: List[str] | None = None  # if None, return all available
 
 
-# Load persisted model on startup (MLflow)
-MODEL_URI = os.environ.get("MLFLOW_MODEL_URI", "").strip()
-if not MODEL_URI and os.path.exists("artifacts/structured_model_uri.txt"):
-    MODEL_URI = open("artifacts/structured_model_uri.txt").read().strip()
+def _resolve_model_uri() -> str | None:
+    # 1) env
+    if settings.MLFLOW_MODEL_URI:
+        return settings.MLFLOW_MODEL_URI.strip()
+    # 2) artifacts file relative to repo root / this file
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(here, "..", "..", "artifacts", "structured_model_uri.txt"),
+        os.path.join("artifacts", "structured_model_uri.txt"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return open(p).read().strip()
+    return None
 
-FEATURES: List[str] = []
-if os.path.exists("artifacts/feature_names.json"):
-    try:
-        FEATURES = json.loads(open("artifacts/feature_names.json").read())
-    except Exception:
-        FEATURES = []
+MODEL_URI = _resolve_model_uri()
+
+def _resolve_feature_names() -> list[str]:
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(here, "..", "..", "artifacts", "feature_names.json"),
+        os.path.join("artifacts", "feature_names.json"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return json.loads(open(p).read())
+    return []
+
+FEATURES = _resolve_feature_names()
 
 ML_MODEL = None  # pyfunc
 LGBM_MODEL = None  # native LightGBM model
@@ -72,6 +92,22 @@ try:
 except Exception:
     ML_MODEL = None
 
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+@app.get("/ready")
+def ready() -> dict[str, str]:
+    """Readiness probe: model optional (configurable), expected_latest presence helpful."""
+    model_ok = (ML_MODEL is not None) or (not settings.READINESS_REQUIRE_MODEL)
+    expected_ok = True
+    try:
+        _ = load_expected_latest(settings.EXPECTED_DIR)
+    except Exception:
+        expected_ok = False
+    status = "ready" if (model_ok or expected_ok) else "not_ready"
+    return {"status": status, "model_loaded": str(bool(ML_MODEL)), "expected_available": str(expected_ok)}
 
 @app.post("/score", response_model=ScoreResponse)
 def score(req: ScoreRequest) -> ScoreResponse:
@@ -184,7 +220,7 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
 def score_expected(req: ScoreExpectedRequest) -> ScoreResponse:
     """Return latest expected alphas from `expected/expected_latest.parquet`."""
     try:
-        latest = load_expected_latest("expected")  # 1-row, columns=tickers
+        latest = load_expected_latest(settings.EXPECTED_DIR)  # 1-row snapshot
     except Exception:
         return ScoreResponse(alpha={})
     row = latest.iloc[-1]
@@ -192,4 +228,6 @@ def score_expected(req: ScoreExpectedRequest) -> ScoreResponse:
         row = row.reindex(req.tickers).dropna()
     return ScoreResponse(alpha=row.astype(float).to_dict())
 
-
+# Prometheus metrics (enabled by default)
+if settings.METRICS_ENABLED:
+    Instrumentator().instrument(app).expose(app, include_in_schema=False)

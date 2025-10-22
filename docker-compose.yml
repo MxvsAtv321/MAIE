@@ -1,0 +1,12 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      - LOG_LEVEL=INFO
+      - METRICS_ENABLED=true
+      - READINESS_REQUIRE_MODEL=false
+      # - MLFLOW_MODEL_URI=runs:/<run-id>/model
+    volumes:
+      - ./expected:/app/expected:ro
+      - ./artifacts:/app/artifacts:ro
