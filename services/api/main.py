@@ -186,42 +186,58 @@ def _explainer_cached():
 
 @app.post("/explain_local", response_model=ExplainLocalResponse)
 def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
-    """Return top-K SHAP feature contributions for a given ticker on the latest row."""
-    # Build DataFrame from input prices
-    lens = {k: len(v) for k, v in req.prices.items()}
-    n = max(lens.values())
-    idx = pd.RangeIndex(n)
-    
-    data = {k: pd.Series(v, index=pd.RangeIndex(len(v))) for k, v in req.prices.items()}
-    df = pd.DataFrame(data).reindex(index=idx).ffill().bfill()
-    
-    X, y = build_features(df)
-    latest = X.iloc[-1]  # Get latest row
-    
-    if req.ticker not in latest.index:
-        return ExplainLocalResponse(ticker=req.ticker, top_features=[])
-    
-    # Align to training feature order (from feature_names.json)
-    if FEATURES:
-        latest = latest.reindex(columns=FEATURES).fillna(0.0)
-    else:
-        latest = latest.fillna(0.0)
-    
-    xrow = latest.loc[[req.ticker]]
+    """Top-K per-ticker feature contributions on latest row (robust to lookback/NaNs)."""
+    # 0) Canonicalize ticker casing (avoid "sim0001" vs "SIM0001" mismatches)
+    want = str(req.ticker).strip()
+    want_upper = want.upper()
 
-    # 1) Fast path: native LightGBM SHAP via pred_contrib=True (includes bias as last col)
+    # 1) Build features from the raw price history payload
+    df = pd.DataFrame({k: pd.Series(v) for k, v in req.prices.items()})
+    # Standardize incoming keys to upper for alignment
+    df.columns = [str(c).upper() for c in df.columns]
+
+    X, y = build_features(df)                    # Returns (features, targets)
+    # X has MultiIndex (date, ticker) with features as columns
+    # Get the latest date slice
+    latest_date = X.index.get_level_values(0).max()
+    latest = X.loc[latest_date]                  # DataFrame with tickers as index, features as columns
+    X = latest.copy()                            # rows=tickers, cols=features
+    X.index = [str(ix).upper() for ix in X.index]       # upper-case index for matching
+
+    # 2) Align columns to training feature order if we have it
+    if FEATURES:
+        X = X.reindex(columns=FEATURES)
+
+    # 3) GUARANTEE the requested ticker has a row:
+    #    if it was dropped by the feature builder (e.g., not enough lookback),
+    #    create a zero row so we can still produce a stable explanation.
+    if want_upper not in X.index:
+        # Add a zeroed-out row for the missing ticker
+        X.loc[want_upper] = 0.0
+
+    # Fill any remaining gaps (NaNs → 0)
+    X = X.fillna(0.0)
+
+    # Keep only the requested ticker
+    xrow = X.loc[[want_upper]]
+    features_order = xrow.columns.tolist()
+
+    # 4) Fast path: LightGBM native SHAP via pred_contrib
     booster = _get_booster()
     if booster is not None:
         try:
-            contrib = booster.predict(xrow.values, pred_contrib=True)
+            contrib = booster.predict(xrow.values, pred_contrib=True)  # shape: (1, d+1) w/ bias last
             vals = contrib[0][:-1]  # drop bias term
-            feats = xrow.columns.tolist()
-            pairs = sorted(zip(feats, map(float, vals)), key=lambda z: abs(z[1]), reverse=True)[:req.top_k]
-            return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
+            pairs = sorted(
+                zip(features_order, map(float, vals)),
+                key=lambda z: abs(z[1]),
+                reverse=True
+            )[:req.top_k]
+            return ExplainLocalResponse(ticker=want, top_features=pairs)
         except Exception:
-            pass
+            pass  # fall through to slower paths
 
-    # 2) Slow path: SHAP TreeExplainer (if it can initialize)
+    # 5) Slow path: SHAP TreeExplainer if available
     explainer = _explainer_cached()
     if explainer is not None:
         try:
@@ -229,16 +245,19 @@ def explain_local(req: ExplainLocalRequest) -> ExplainLocalResponse:
             if isinstance(sv, list):
                 sv = sv[0]
             vals = sv[0]
-            feats = xrow.columns.tolist()
-            pairs = sorted(zip(feats, map(float, vals)), key=lambda z: abs(z[1]), reverse=True)[:req.top_k]
-            return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
+            pairs = sorted(
+                zip(features_order, map(float, vals)),
+                key=lambda z: abs(z[1]),
+                reverse=True
+            )[:req.top_k]
+            return ExplainLocalResponse(ticker=want, top_features=pairs)
         except Exception:
             pass
 
-    # 3) Guaranteed fallback: magnitude ranking (never empty)
-    s = xrow.iloc[0].abs().sort_values(ascending=False)
-    pairs = list(zip(s.index[:req.top_k].tolist(), s.values[:req.top_k].astype(float)))
-    return ExplainLocalResponse(ticker=req.ticker, top_features=pairs)
+    # 6) Guaranteed fallback: magnitude ranking of standardized features
+    mags = xrow.iloc[0].abs().sort_values(ascending=False)
+    pairs = list(zip(mags.index[:req.top_k].tolist(), mags.values[:req.top_k].astype(float)))
+    return ExplainLocalResponse(ticker=want, top_features=pairs)
 
 @app.post("/score_expected", response_model=ScoreResponse)
 def score_expected(req: ScoreExpectedRequest) -> ScoreResponse:
