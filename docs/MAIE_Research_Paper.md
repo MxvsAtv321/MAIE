@@ -1,11 +1,11 @@
 # Multi-Modal Alpha Intelligence Engine (MAIE): System Design, Optimization, and Production Validation
 
 **Authors**: MAIE Team  
-**Date**: 2025-10-22T18:18:26.890716Z
+**Date**: 2025-10-24T15:08:29.286257Z
 
 ## Abstract
 
-The Multi-Modal Alpha Intelligence Engine (MAIE) implements a systematic equity portfolio construction pipeline from synthetic data generation through production API deployment. The system generates synthetic OHLCV data for 800 assets via `src/maie/data/synthetic.py`, constructs tabular features (momentum, volatility, reversal) in `src/maie/features/tabular.py`, trains LightGBM models with time-series cross-validation in `src/maie/models/rolling.py`, and optimizes portfolios using OSQP with β-neutral and sector-neutral constraints defined in `constraints.yaml`. The backtesting engine in `src/maie/backtest/engine.py` implements daily walk-forward testing with transaction costs, while the FastAPI service in `services/api/main.py` exposes scoring and explanation endpoints with Prometheus metrics. Key performance metrics include 1827 trading days expected returns panel, 0.00% QP infeasibility rate, and 2.24s build time. The system achieves production readiness through comprehensive observability, statistical validation, and automated release gates.
+The Multi-Modal Alpha Intelligence Engine (MAIE) implements a systematic equity portfolio construction pipeline from synthetic data generation through production API deployment. The system generates synthetic OHLCV data for 800 assets via `src/maie/data/synthetic.py`, constructs tabular features (momentum, volatility, reversal) in `src/maie/features/tabular.py`, trains LightGBM models with time-series cross-validation in `src/maie/models/rolling.py`, and optimizes portfolios using OSQP with β-neutral and sector-neutral constraints defined in `constraints.yaml`. The backtesting engine in `src/maie/backtest/engine.py` implements daily walk-forward testing with transaction costs, while the FastAPI service in `services/api/main.py` exposes scoring and explanation endpoints with Prometheus metrics. Key performance metrics include 1827 trading days expected returns panel, 0.00% QP infeasibility rate, and 2.33s build time. The system achieves production readiness through comprehensive observability, statistical validation, and automated release gates.
 
 ## 1. Introduction
 
@@ -55,7 +55,7 @@ Observability: Prometheus metrics → maie_qp_solve_seconds, maie_feature_skew_t
 - **Unique Dates**: 1827 business days
 - **Files**: 86 monthly partitions + latest snapshot
 - **Total Size**: 49724259 bytes
-- **Build Time**: 2.24 seconds
+- **Build Time**: 2.33 seconds
 - **Head Dates**: ['2018-01-01', '2018-01-02', '2018-01-03']
 - **Tail Dates**: ['2024-12-27', '2024-12-30', '2024-12-31']
 
@@ -189,10 +189,10 @@ make audit-full       # Full production audit pipeline
 ```
 
 **Provenance Fields**:
-- **Commit SHA**: 2715b3fee398c8666235183402ddca42882ac5ab
+- **Commit SHA**: c20eafdc6c85d229babd6f865588ada7195ef22d
 - **Python/OS**: 3.13.5 on Darwin arm64
-- **Timestamp**: 2025-10-22T18:18:31.875204Z
-- **File Hashes**: numbers.json=b135185eed19d98e, expected/metadata.json=ab3fba41885d36d9, threshold_status.json=bf64efa64fcca0cf
+- **Timestamp**: 2025-10-24T15:08:34.104095Z
+- **File Hashes**: numbers.json=073d08ff91ac264c, expected/metadata.json=4d17948686ed273b, threshold_status.json=bf64efa64fcca0cf
 - **Package versions**: [[MISSING:package_versions]]
 
 ## References

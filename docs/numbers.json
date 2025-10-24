@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "commit_sha": "2715b3fee398c8666235183402ddca42882ac5ab",
-    "timestamp": "2025-10-22T18:21:18.413805Z",
+    "commit_sha": "c20eafdc6c85d229babd6f865588ada7195ef22d",
+    "timestamp": "2025-10-24T15:08:29.286257Z",
     "python_version": "3.13.5",
     "os": "Darwin arm64",
     "cpu": "Unknown",
@@ -26,7 +26,7 @@
     "end": "2024-12-31",
     "n_files": 86,
     "total_bytes": 49724259,
-    "build_seconds": 2.273971500006155,
+    "build_seconds": 2.3292026249982882,
     "n_unique_dates": 1827,
     "head_dates": [
       "2018-01-01",
@@ -362,7 +362,7 @@
     "end": "2024-12-31",
     "n_files": 86,
     "total_bytes": 49724259,
-    "build_seconds": 2.273971500006155
+    "build_seconds": 2.3292026249982882
   },
   "backtest_meta": {
     "n_days": 1827,
